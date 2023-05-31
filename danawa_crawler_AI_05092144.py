@@ -13,7 +13,7 @@ import re
 import oracledb
 import math
 import time
-
+from crawler_config import DATABASE_CONFIG
 
 app = FastAPI()
 
@@ -24,10 +24,11 @@ class OracleDB:
 
     def start(self):
         # Oracle 데이터베이스에 연결합니다.
+        db_config = DATABASE_CONFIG  # config.py에서 데이터베이스 연결 정보 가져오기
         self._conn = oracledb.connect(
-            user="DEVENVSHARE",
-            password="DEVENVSHARE",
-            dsn="localhost:1521/xe"
+            user=db_config["user"],
+            password=db_config["password"],
+            dsn=db_config["dsn"]
         )
 
     def stop(self):
@@ -116,8 +117,8 @@ def get_webdriver():
     options = Options()
     options.add_argument('--headless')
 
-    # return webdriver.Chrome("driver\\chromedriver.exe", options=options)
-    return webdriver.Chrome("driver\\chromedriver.exe")
+    return webdriver.Chrome("driver\\chromedriver.exe", options=options)
+    # return webdriver.Chrome("driver\\chromedriver.exe")
 
 
 def get_product_info(product):
