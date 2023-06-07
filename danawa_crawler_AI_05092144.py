@@ -14,9 +14,11 @@ import oracledb
 import math
 import time
 from crawler_config import DATABASE_CONFIG
-
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 app = FastAPI()
 
+scheduler = AsyncIOScheduler()
 
 class OracleDB:
     def __init__(self):
@@ -237,6 +239,10 @@ def crawl_products(driver, products):
 
 @app.on_event("startup")
 async def startup_event():
+    scheduler.add_job(start_crawl, CronTrigger(hour=0))  # Every day at midnight
+    scheduler.start()
+
+async def start_crawl():
     categories = {
         "monitor": [112757, 11248106, 11230049, 11230059, 11230081, 11230076],
         "keyboard": [11335184, 1131635, 1139922, 11317385, 11341565, 11347372, 11342148, 11342291, 11344629],
@@ -283,7 +289,10 @@ async def startup_event():
         driver.quit()
         oracle_db.stop()
         print("드라이버 종료")
-
+        
+@app.on_event("shutdown")
+def shutdown_event():
+    scheduler.shutdown()
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
