@@ -1,4 +1,3 @@
-# github actions를 위한 yml파일
 name: Crawl Products
 
 on:
@@ -9,14 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
-    env:
-      USER: ${{ secrets.USER }}
-      PASSWORD: ${{ secrets.PASSWORD }}
-      HOST: ${{ secrets.HOST }}
-      PORT: ${{ secrets.PORT }}
-      SERVICE_NAME: ${{ secrets.SERVICE_NAME }}
-      LOG_LEVEL: ${{ secrets.LOG_LEVEL }}
     
     steps:
       - name: Checkout repository
@@ -35,3 +26,10 @@ jobs:
       - name: Run crawler
         run: |
           python script.py
+        env:
+          USER: ${{ secrets.USER }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+          HOST: ${{ secrets.HOST }}
+          PORT: ${{ secrets.PORT }}
+          SERVICE_NAME: ${{ secrets.SERVICE_NAME }}
+          LOG_LEVEL: ${{ secrets.LOG_LEVEL }}
