@@ -18,9 +18,14 @@ from tqdm import tqdm
 # 환경변수 파일을 읽어옵니다.
 if "GITHUB_ACTIONS" in os.environ:
     # GitHub Actions에서 실행 중인 경우, Secrets를 사용하여 환경 변수 로드
-    # api_key = os.environ["API_KEY"]
-    # debug_mode = os.environ["DEBUG"]
     print("GitHub Actions")
+    user = os.environ["USER"]
+    password = os.environ["PASSWORD"]
+    host = os.environ["HOST"]
+    port = os.environ["PORT"]
+    service_name = os.environ["SERVICE_NAME"]
+    log_level = os.environ["LOG_LEVEL"]
+
 else:
     # 로컬 개발 환경에서는 .env 파일을 사용하여 환경 변수 로드
     load_dotenv()
@@ -30,7 +35,9 @@ else:
     port = os.getenv("PORT")
     service_name = os.getenv("SERVICE_NAME")
     log_level = os.getenv("LOG_LEVEL")
-#     log_level이 DEBUG, INFO, WARNING, ERROR, CRITICAL 중 하나인지 확인합니다.
+
+
+# log_level이 DEBUG, INFO, WARNING, ERROR, CRITICAL 중 하나인지 확인합니다.
 # 그 후 로그 레벨을 그에 맞게 설정합니다.
     if log_level in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
         log_level = getattr(logging, log_level)
