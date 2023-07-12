@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.select import Select
@@ -140,7 +141,8 @@ def get_webdriver():
     options.add_argument('--headless')  # 헤드리스 모드 사용
     options.add_argument('--log-level=3')  # 로그 레벨 설정 (3: 경고 메시지만 표시)
     options.add_argument('--disable-gpu')  # GPU 사용 비활성화
-    return webdriver.Chrome("driver/chromedriver.exe", options=options)
+    service = Service(executable_path=r'/usr/bin/chromedriver')
+    return webdriver.Chrome(service=service, options=options)
 
 
 def get_product_info(product):
