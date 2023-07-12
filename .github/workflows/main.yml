@@ -32,5 +32,6 @@ jobs:
           
       - name: Run crawler
         run: |
+          echo $USER
           python script.py
 
