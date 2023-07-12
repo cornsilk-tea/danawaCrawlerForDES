@@ -10,6 +10,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     
+    env:
+      USER: ${{ secrets.USER }}
+      PASSWORD: ${{ secrets.PASSWORD }}
+      HOST: ${{ secrets.HOST }}
+      PORT: ${{ secrets.PORT }}
+      SERVICE_NAME: ${{ secrets.SERVICE_NAME }}
+      LOG_LEVEL: ${{ env.LOG_LEVEL }}
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
