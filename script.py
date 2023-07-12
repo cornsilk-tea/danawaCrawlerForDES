@@ -39,8 +39,8 @@ else:
 
 # log_level이 DEBUG, INFO, WARNING, ERROR, CRITICAL 중 하나인지 확인합니다.
 # 그 후 로그 레벨을 그에 맞게 설정합니다.
-    if log_level in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
-        log_level = getattr(logging, log_level)
+if log_level in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
+    log_level = getattr(logging, log_level)
 
 
 
