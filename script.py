@@ -1,19 +1,43 @@
+import csv
+import logging
+import math
+import os
+import re
+
+import oracledb
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.select import Select
-import csv
-import re
-import oracledb
-import math
-import logging
+from selenium.webdriver.support.wait import WebDriverWait
 from tqdm import tqdm
-from crawler_config import DATABASE_CONFIG
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# 환경변수 파일을 읽어옵니다.
+if "GITHUB_ACTIONS" in os.environ:
+    # GitHub Actions에서 실행 중인 경우, Secrets를 사용하여 환경 변수 로드
+    # api_key = os.environ["API_KEY"]
+    # debug_mode = os.environ["DEBUG"]
+    print("GitHub Actions")
+else:
+    # 로컬 개발 환경에서는 .env 파일을 사용하여 환경 변수 로드
+    load_dotenv()
+    user = os.getenv("USER")
+    password = os.getenv("PASSWORD")
+    host = os.getenv("HOST")
+    port = os.getenv("PORT")
+    service_name = os.getenv("SERVICE_NAME")
+    log_level = os.getenv("LOG_LEVEL")
+#     log_level이 DEBUG, INFO, WARNING, ERROR, CRITICAL 중 하나인지 확인합니다.
+# 그 후 로그 레벨을 그에 맞게 설정합니다.
+    if log_level in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
+        log_level = getattr(logging, log_level)
+
+
+
+logging.basicConfig(level=log_level, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class OracleDB:
     def __init__(self):
@@ -21,11 +45,12 @@ class OracleDB:
 
     def start(self):
         # Oracle 데이터베이스에 연결합니다.
-        db_config = DATABASE_CONFIG  # config.py에서 데이터베이스 연결 정보 가져오기
+        # env파일에서 데이터베이스 정보를 읽어옵니다.
+        dsn = oracledb.makedsn(host=host, port=int(port), service_name=service_name)
         self._conn = oracledb.connect(
-            user=db_config["user"],
-            password=db_config["password"],
-            dsn=db_config["dsn"]
+            user=user,
+            password=password,
+            dsn=dsn,
         )
 
     def stop(self):
@@ -50,20 +75,9 @@ class OracleDB:
     def commit(self):
         self._conn.commit()
     
-
-    # def execute_insert_many(self, query, values_list):
-    #     # 여러 개의 데이터를 한 번에 삽입합니다.
-    #     cursor = self._conn.cursor()
-    #     cursor.executemany(query, values_list)
-    #     # self._conn.commit()
-    #     # print(cursor.rowcount, "개의 데이터가 삽입되었습니다.")
-    #     return cursor.rowcount
-    
     def execute_many(self, query, values_list):
         cursor = self._conn.cursor()
         cursor.executemany(query, values_list)
-        # self._conn.commit()
-        # print(cursor.rowcount, "개의 데이터가 삽입되었습니다.")
         return cursor.rowcount
 
     def begin_transaction(self):
@@ -120,7 +134,6 @@ def get_webdriver():
     options.add_argument('--log-level=3')  # 로그 레벨 설정 (3: 경고 메시지만 표시)
     options.add_argument('--disable-gpu')  # GPU 사용 비활성화
     return webdriver.Chrome("driver/chromedriver.exe", options=options)
-    # return webdriver.Chrome("driver/chromedriver.exe")
 
 
 def get_product_info(product):
@@ -191,9 +204,7 @@ def crawl_products(driver, products, url):
                 total_products = int(remove_comma(new_soup.select_one(
                     '#danawa_content > div.product_list_wrap > div.product_list_area > div.prod_list_tab > ul > li.tab_item.selected > a > strong.list_num').text.strip()))
                 logging.info(f"총 상품 개수는 {total_products}개 입니다.")
-            # logging.info(f"현재 페이지: {page}")
             select_elements = new_soup.select('div.main_prodlist > ul.product_list > li.prod_item > div.prod_main_info')
-            # next_page_link = new_soup.select_one('a.edge_nav.nav_next')
             if math.ceil(total_products / 90) == page:
                 break
             if pbar is None:
@@ -293,13 +304,6 @@ def write_product_info(cat, file, products):
 
 
 def start_crawl():
-    # categories = {
-    #     "monitor": [112757, 11248106, 11230049, 11230059, 11230081, 11230076],
-    #     "keyboard": [11335184, 1131635, 1139922, 11317385, 11341565, 11347372, 11342148, 11342291, 11344629],
-    #     "mouse": [11310719, 11317389, 11312617, 1131804],
-    #     "desk": [15335915, 15343651, 15344971, 15335908, 15344981],
-    #     "chair": [15345047, 15345042, 15345043, 15346299, 15345045],
-    # }
     categories = {
         "monitor": [112757, 11248106, 11230049, 11230059, 11230081, 11230076],
         "keyboard": [112782],
@@ -316,7 +320,12 @@ def start_crawl():
         cat_num = 1
         for cate_name, category in categories.items():
             products = set()
-            with open(f"{cate_name}.csv", "w", encoding="utf-8-sig", newline="") as f:
+            # 현재 위치 밑에 있는 폴더 'data'에 csv 파일을 생성
+            # 해당 폴더를 윈도우, 리눅스 어떤 환경에서도 사용할 수 있도록 함
+            # 폴더가 없으면 생성
+            if not os.path.exists("data"):
+                os.mkdir("data")
+            with open(f"data/{cate_name}.csv", "w", encoding="utf-8-sig", newline="") as f:
                 writer = csv.writer(f)
                 writer.writerow(["제품명", "가격", "링크"])
 
