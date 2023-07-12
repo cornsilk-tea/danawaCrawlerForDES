@@ -16,7 +16,7 @@ jobs:
       HOST: ${{ secrets.HOST }}
       PORT: ${{ secrets.PORT }}
       SERVICE_NAME: ${{ secrets.SERVICE_NAME }}
-      LOG_LEVEL: ${{ env.LOG_LEVEL }}
+      LOG_LEVEL: ${{ secrets.LOG_LEVEL }}
     
     steps:
       - name: Checkout repository
